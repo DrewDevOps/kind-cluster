@@ -1,0 +1,36 @@
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: management-network
+  namespace: metallb-system
+spec:
+  addresses:
+  - 10.96.183.64 - 10.96.183.79
+---
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  name: management-network
+  namespace: metallb-system
+spec:
+  ipAddressPools:
+  - management-network
+
+---
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: production-network
+  namespace: metallb-system
+spec:
+  addresses:
+  - 10.96.183.80 - 10.96.184.99
+---
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  name: production-network
+  namespace: metallb-system
+spec:
+  ipAddressPools:
+  - production-network

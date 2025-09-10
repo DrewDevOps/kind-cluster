@@ -1,0 +1,59 @@
+#docker run -d -p 3000:8080 -e OLLAMA_BASE_URL=https://example.com -v open-webui:/app/backend/data --name open-webui --restart always ghcr.io/open-webui/open-webui:main
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: openweb-ui-deployment
+spec:
+  selector:
+    matchLabels:
+      app: openweb-ui
+  template:
+    metadata:
+      labels:
+        app: openweb-ui
+    spec:
+      volumes:
+        - name: openweb-ui-pv
+          emptyDir: {}
+      containers:
+      - name: openweb-ui
+        env:
+          - name: OLLAMA_BASE_URL 
+            value: http://10.96.183.66:11434
+          - name: GLOBAL_LOG_LEVEL
+            value: DEBUG
+          - name: OLLAMA_LOG_LEVEL
+            value: DEBUG
+        image: ghcr.io/open-webui/open-webui:main
+        imagePullPolicy: IfNotPresent
+        resources:
+            requests:
+              cpu: 250m
+              memory: 750Mi
+            limits:
+              cpu: 500m
+              memory: 5Gi
+        ports:
+        - containerPort: 8080
+        volumeMounts:
+            - mountPath: /app/backend/data
+              name: openweb-ui-pv
+      restartPolicy: Always
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: openweb-ui
+  name: openweb-ui
+  namespace: ai
+spec:
+  type: LoadBalancer
+  ports:
+  - name: openweb-ui
+    port: 3000
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: openweb-ui

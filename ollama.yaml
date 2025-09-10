@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ollama-deployment
+spec:
+  selector:
+    matchLabels:
+      app: ollama
+  template:
+    metadata:
+      labels:
+        app: ollama
+    spec:
+      volumes:
+        - name: ollama-pv
+          emptyDir: {}
+      containers:
+      - name: ollama
+        image: ollama/ollama
+        imagePullPolicy: IfNotPresent
+        resources:
+            requests:
+              cpu: 250m
+              memory: 750Mi
+            limits:
+              cpu: 500m
+              memory: 1Gi
+        ports:
+        - containerPort: 11434
+        volumeMounts:
+            - mountPath: /root/.ollama
+              name: ollama-pv
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: ollama
+  name: ollama
+  namespace: ai
+spec:
+  type: LoadBalancer
+  ports:
+  - name: ollama
+    port: 11434
+    protocol: TCP
+    targetPort: 11434
+  selector:
+    app: ollama

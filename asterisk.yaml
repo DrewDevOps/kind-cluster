@@ -1,0 +1,82 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: asterisk-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: asterisk
+  name: asterisk
+spec:
+  selector:
+    matchLabels:
+      app: asterisk
+  template:
+    metadata:
+      labels:
+        app: asterisk
+    spec:
+      securityContext:
+        fsGroup: 472
+        supplementalGroups:
+          - 0
+      containers:
+        - name: asterisk
+          image: asterisk/asterisk:10.0.8
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+              name: http-asterisk
+              protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /robots.txt
+              port: 3000
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            successThreshold: 1
+            timeoutSeconds: 2
+          livenessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            tcpSocket:
+              port: 3000
+            timeoutSeconds: 1
+          resources:
+            requests:
+              cpu: 250m
+              memory: 750Mi
+          volumeMounts:
+            - mountPath: /var/lib/asterisk
+              name: asterisk-pv
+      volumes:
+        - name: asterisk-pv
+          persistentVolumeClaim:
+            claimName: asterisk-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: asterisk
+spec:
+  ports:
+    - port: 3000
+      protocol: TCP
+      targetPort: http-asterisk
+  selector:
+    app: asterisk
+  sessionAffinity: None
+  type: LoadBalancer
