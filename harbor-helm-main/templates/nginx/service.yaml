@@ -16,7 +16,7 @@ metadata:
   {{- toYaml . | nindent 4 }}
 {{- end }}
 spec:
-  type: ClusterIP
+  type: LoadBalancer
   {{- if .Values.expose.clusterIP.staticClusterIP }}
   clusterIP: {{ .Values.expose.clusterIP.staticClusterIP }}
   {{- end }}
